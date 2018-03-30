@@ -2,12 +2,12 @@ apiVersion: v1
 entries:
   zerotier:
   - apiVersion: v1
-    appVersion: "1.0"
-    created: 2018-03-30T21:54:08.680183831+02:00
+    appVersion: 1.2.4
+    created: 2018-03-30T22:03:02.271603008+02:00
     description: A helm chart for Zerotier on Kubernetes
-    digest: 48168899b3a62a77346852bbcd1483224d392c0d35b37d8b63c1efb7624e5802
+    digest: f71726e38795594631c7e81549fba79615a4b5457116f2dbfcc14064db6ab0ea
     name: zerotier
     urls:
-    - zerotier-0.1.0.tgz
-    version: 0.1.0
-generated: 2018-03-30T21:54:08.679277921+02:00
+    - zerotier-0.1.1.tgz
+    version: 0.1.1
+generated: 2018-03-30T22:03:02.270590781+02:00
