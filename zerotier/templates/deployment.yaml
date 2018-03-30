@@ -1,0 +1,72 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "zerotier.fullname" . }}
+  labels:
+    app: {{ template "zerotier.name" . }}
+    chart: {{ template "zerotier.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "zerotier.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "zerotier.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      volumes:
+      - name: tundev
+        hostPath:
+          path: /dev/net/tun
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          volumeMounts:
+          - mountPath: /dev/net/tun
+            name: tundev
+          env:
+            - name: ZT_API_KEY
+              value: "{{ .Values.zt_api_key }}"
+            - name: ZT_NETWORK_ID
+              value: "{{ .Values.zt_network }}"
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          livenessProbe:
+            exec:
+              command:
+              - bash
+              - -c
+              - ps aux | grep -i '[z]erotier'
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - bash
+              - -c
+              - zerotier-cli listnetworks | grep OK
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
