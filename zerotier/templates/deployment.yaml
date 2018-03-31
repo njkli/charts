@@ -31,7 +31,10 @@ spec:
             name: tundev
           env:
             - name: ZT_API_KEY
-              value: "{{ .Values.zt_api_key }}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "zerotier.fullname" . }}
+                  key: zt_api_key
             - name: ZT_NETWORK_ID
               value: "{{ .Values.zt_network }}"
           securityContext:
