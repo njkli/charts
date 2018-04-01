@@ -1,0 +1,117 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "trusty4ds.fullname" . }}
+  labels:
+    app: {{ template "trusty4ds.name" . }}
+    chart: {{ template "trusty4ds.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "trusty4ds.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "trusty4ds.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "trusty4ds.fullname" . }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim | default (include "trusty4ds.fullname" .) }}
+      - name: fusedev
+        hostPath:
+          path: /dev/fuse
+      containers:
+        - name: "{{ .Chart.Name }}-yadisk"
+          image: voobscout/base-deb:yadisk
+          env:
+            - name: RUN_USER
+              value: app
+            - name: RUN_UID
+              value: "1002"
+            - name: YANDEX_UNAME
+              value: {{ .Values.yadisk.uname | quote }}
+            - name: YANDEX_PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "trusty4ds.fullname" . }}
+                  key: yandex_passwd
+          stdin: true
+          tty: true
+          volumeMounts:
+          - mountPath: /home/app/Yandex.Disk
+            name: data
+          livenessProbe:
+            exec:
+              command:
+              - bash
+              - -c
+              - "ps aux | grep -i '[y]andex'"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - runuser
+              - app
+              - -c
+              - 'yandex-disk status'
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # end of yadisk container
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          volumeMounts:
+          - mountPath: /etc/config
+            name: config
+          - mountPath: /opt/app/run
+            name: data
+          - mountPath: /dev/fuse
+            name: fusedev
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: true
+            # Unfortunately fuse refuses to mount with those caps:
+            # TODO: maybe mknod inside container and try like that?
+            # capabilities:
+            #   add:
+            #     - SYS_ADMIN
+            #     - SYS_RESOURCE
+            #     - MKNOD
+          ports:
+            - name: ssh
+              containerPort: 22
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 22
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 22
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "trusty4ds.fullname" . }}
+  labels:
+    app: {{ template "trusty4ds.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  # database: {{ template "trusty4ds.mariadb.fullname" . }}
+  database.yaml: |
+    :mysql_database: {{ .Values.mariadb.mariadbDatabase }}
+    :mysql_uname: {{ .Values.mariadb.mariadbUser }}
+    :mysql_passwd: {{ .Values.mariadb.mariadbPassword }}
+    :mysql_root_passwd: {{ .Values.mariadb.mariadbRootPassword }}
+    :mysql_host: {{ template "trusty4ds.mariadb.fullname" . }}
+    :mysql_port: '3306'

@@ -1,0 +1,52 @@
+# Default values for trusty4ds.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: voobscout/trusty4ds
+  tag: latest
+  pullPolicy: IfNotPresent
+  # Always
+
+service:
+  type: ClusterIP
+  port: 22
+
+persistence:
+  # existingClaim:
+  storageClass:
+  size: 50Gi
+  accessMode: ReadWriteMany
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+yadisk:
+  uname:
+  passwd:
+
+mariadb:
+  enabled: true
+  mariadbDatabase:
+  mariadbUser:
+  mariadbPassword:
+  mariadbRootPassword:
+  persistence:
+    enabled: true
+    ## mariadb data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    accessMode: ReadWriteOnce
+    size: 8Gi
