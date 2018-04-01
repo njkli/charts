@@ -71,8 +71,12 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           volumeMounts:
-          - mountPath: /etc/config
+          - mountPath: /etc/config/database.yaml
             name: config
+            subPath: database.yaml
+          - mountPath: /opt/app/.ssh/authorized_keys
+            name: config
+            subPath: authorized_keys
           - mountPath: /opt/app/run
             name: data
           - mountPath: /dev/fuse

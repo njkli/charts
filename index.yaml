@@ -3,21 +3,21 @@ entries:
   trusty4ds:
   - apiVersion: v1
     appVersion: "1.0"
-    created: 2018-04-01T13:37:47.230787663+02:00
-    description: A Helm chart for Kubernetes
-    digest: 66297c74efaff13ffc8b6e13778a62debdd0df8ac27ab07bd6709520da0a29a0
+    created: 2018-04-01T22:05:53.444758458+02:00
+    description: trusty4ds - ubuntu:trusty for Distributed System ruby container
+    digest: 7ea3b7cb08ee59ff9a5d3c6a325c37337dd3bd8a4649ee47adf607271944099c
     name: trusty4ds
     urls:
-    - trusty4ds-0.1.0.tgz
-    version: 0.1.0
+    - trusty4ds-0.1.1.tgz
+    version: 0.1.1
   zerotier:
   - apiVersion: v1
     appVersion: 1.2.4
-    created: 2018-04-01T13:37:47.231515219+02:00
+    created: 2018-04-01T22:05:53.445411764+02:00
     description: A helm chart for Zerotier on Kubernetes
     digest: 509fe83db9fb0a83c6a014f0ef08004259786f3e08cadf6c2ffb6dd43c9d4e8c
     name: zerotier
     urls:
     - zerotier-0.1.3.tgz
     version: 0.1.3
-generated: 2018-04-01T13:37:47.228413817+02:00
+generated: 2018-04-01T22:05:53.442300711+02:00
