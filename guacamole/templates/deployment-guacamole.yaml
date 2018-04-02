@@ -63,6 +63,10 @@ spec:
       containers:
       - name: "{{ .Chart.Name }}-guacamole"
         image: "{{ .Values.guacamole.image.repository }}:{{ .Values.guacamole.image.tag }}"
+        command:
+        - sh
+        - -c
+        - 'rm -rf /usr/local/tomcat/webapps/*; ln -s /opt/guacamole/guacamole.war /usr/local/tomcat/webapps/ROOT.war; exec /opt/guacamole/bin/start.sh'
         imagePullPolicy: {{ .Values.guacamole.image.pullPolicy }}
         env:
           - name: MYSQL_HOSTNAME
@@ -85,7 +89,7 @@ spec:
             containerPort: 8080
         livenessProbe:
           httpGet:
-            path: /guacamole
+            path: /
             port: 8080
             httpHeaders:
             - name: Server
@@ -95,7 +99,7 @@ spec:
           failureThreshold: 6
         readinessProbe:
           httpGet:
-            path: /guacamole
+            path: /
             port: 8080
             httpHeaders:
             - name: Server
