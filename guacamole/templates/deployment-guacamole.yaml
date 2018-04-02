@@ -1,0 +1,119 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "guacamole.fullname" . }}-guacamole
+  labels:
+    app: {{ template "guacamole.name" . }}
+    component: guacamole
+    chart: {{ template "guacamole.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "guacamole.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "guacamole.name" . }}
+        component: guacamole
+        release: {{ .Release.Name }}
+    spec:
+      volumes:
+      - name: scratch
+        emptyDir:
+          # medium: Memory
+      # for i in {1..100}; do sleep 1; if dig myservice; then exit 0; fi; done; exit 1
+      initContainers:
+      - name: init-mysql-schema
+        image: "{{ .Values.guacamole.image.repository }}:{{ .Values.guacamole.image.tag }}"
+        volumeMounts:
+        - mountPath: /opt/scratch
+          name: scratch
+        command:
+        - sh
+        - -c
+        - '/opt/guacamole/bin/initdb.sh --mysql > /opt/scratch/initdb.sql'
+      - name: init-mysql-wait
+        image: busybox
+        command: ['sh', '-c', 'until nc -w3 -z {{ printf "%s-%s" .Release.Name "mariadb" | trunc 63 | trimSuffix "-" }} 3306; do echo waiting for mysql; sleep 3; done;']
+      - name: init-mysql-database
+        image: bitnami/mariadb:latest
+        volumeMounts:
+        - mountPath: /opt/scratch
+          name: scratch
+        env:
+        - name: MYSQL_HOSTNAME
+          value: {{ printf "%s-%s" .Release.Name "mariadb" | trunc 63 | trimSuffix "-" }}
+        - name: MYSQL_DATABASE
+          value: {{ .Values.mariadb.mariadbDatabase }}
+        - name: MYSQL_USER
+          value: {{ .Values.mariadb.mariadbUser }}
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ printf "%s-%s" .Release.Name "mariadb" | trunc 63 | trimSuffix "-" }}
+              key: mariadb-password
+        command:
+        - sh
+        - -c
+        - 'mysql -u $MYSQL_USER -h $MYSQL_HOSTNAME --password=$MYSQL_PASSWORD -D $MYSQL_DATABASE < /opt/scratch/initdb.sql || true'
+      containers:
+      - name: "{{ .Chart.Name }}-guacamole"
+        image: "{{ .Values.guacamole.image.repository }}:{{ .Values.guacamole.image.tag }}"
+        imagePullPolicy: {{ .Values.guacamole.image.pullPolicy }}
+        env:
+          - name: MYSQL_HOSTNAME
+            value: {{ printf "%s-%s" .Release.Name "mariadb" | trunc 63 | trimSuffix "-" }}
+          - name: MYSQL_DATABASE
+            value: {{ .Values.mariadb.mariadbDatabase }}
+          - name: MYSQL_USER
+            value: {{ .Values.mariadb.mariadbUser }}
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ printf "%s-%s" .Release.Name "mariadb" | trunc 63 | trimSuffix "-" }}
+                key: mariadb-password
+          - name: GUACD_HOSTNAME
+            value: {{ template "guacamole.fullname" . }}-guacd
+          - name: GUACD_PORT
+            value: "{{ .Values.guacd.servicePort }}"
+        ports:
+          - name: http
+            containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /guacamole
+            port: 8080
+            httpHeaders:
+            - name: Server
+              value: "Apache-Coyote"
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /guacamole
+            port: 8080
+            httpHeaders:
+            - name: Server
+              value: "Apache-Coyote"
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 6
+        resources:
+{{ toYaml .Values.guacamole.resources | indent 12 }}
+    {{- with .Values.guacamole.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.guacamole.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.guacamole.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

@@ -1,0 +1,55 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "guacamole.fullname" . }}-guacd
+  labels:
+    app: {{ template "guacamole.name" . }}
+    component: guacd
+    chart: {{ template "guacamole.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "guacamole.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "guacamole.name" . }}
+        component: guacd
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: "{{ .Chart.Name }}-guacd"
+          image: "{{ .Values.guacd.image.repository }}:{{ .Values.guacd.image.tag }}"
+          imagePullPolicy: {{ .Values.guacd.image.pullPolicy }}
+          ports:
+            - name: guacd
+              containerPort: 4822
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 4822
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 4822
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.guacd.resources | indent 12 }}
+    {{- with .Values.guacd.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.guacd.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.guacd.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
