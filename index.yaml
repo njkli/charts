@@ -3,7 +3,7 @@ entries:
   guacamole:
   - apiVersion: v1
     appVersion: 0.9.14
-    created: 2018-04-02T21:57:03.910454268+02:00
+    created: 2018-04-16T20:44:32.779506021+02:00
     description: Apache Guacamole is a clientless remote desktop gateway
     digest: ee8c27632048a08b5a6c064017eeb4d558b8d70f16063551558b0f1a49ea6515
     name: guacamole
@@ -13,7 +13,7 @@ entries:
   trusty4ds:
   - apiVersion: v1
     appVersion: "1.0"
-    created: 2018-04-02T21:57:03.912592583+02:00
+    created: 2018-04-16T20:44:32.781599709+02:00
     description: trusty4ds - ubuntu:trusty for Distributed System ruby container
     digest: 7ea3b7cb08ee59ff9a5d3c6a325c37337dd3bd8a4649ee47adf607271944099c
     name: trusty4ds
@@ -23,11 +23,11 @@ entries:
   zerotier:
   - apiVersion: v1
     appVersion: 1.2.4
-    created: 2018-04-02T21:57:03.913224165+02:00
+    created: 2018-04-16T20:44:32.78229953+02:00
     description: A helm chart for Zerotier on Kubernetes
-    digest: 509fe83db9fb0a83c6a014f0ef08004259786f3e08cadf6c2ffb6dd43c9d4e8c
+    digest: 44c3d656f80a1114eb427bf43957f1a18dfee708c8a1026e8466d774d1d7c7a5
     name: zerotier
     urls:
-    - zerotier-0.1.3.tgz
-    version: 0.1.3
-generated: 2018-04-02T21:57:03.907893649+02:00
+    - zerotier-0.1.5.tgz
+    version: 0.1.5
+generated: 2018-04-16T20:44:32.77710293+02:00
