@@ -23,20 +23,37 @@ spec:
       - name: tundev
         hostPath:
           path: /dev/net/tun
+      - name: zt-identity
+        secret:
+          secretName: {{ template "zerotier.fullname" . }}
+      - name: zt-networks
+        configMap:
+          name: {{ template "zerotier.fullname" . }}
+          defaultMode: 0755
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          stdin: true
+          tty: true
+          command: ["/usr/bin/dumb-init"]
+          args: ["/usr/bin/join_zt_networks"]
           volumeMounts:
+          - mountPath: /var/lib/zerotier-one/identity.secret
+            name: zt-identity
+            subPath: zt_private_key
+          - mountPath: /usr/bin/join_zt_networks
+            name: zt-networks
+            subPath: zt_networks
           - mountPath: /dev/net/tun
             name: tundev
+          {{- if .Values.zt_api_key }}
           env:
             - name: ZT_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ template "zerotier.fullname" . }}
                   key: zt_api_key
-            - name: ZT_NETWORK_ID
-              value: "{{ .Values.zt_network }}"
+          {{- end }}
           securityContext:
             capabilities:
               add:

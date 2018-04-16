@@ -27,5 +27,8 @@ tolerations: []
 
 affinity: {}
 
+nat: true
+
 zt_api_key: ""
-zt_network: ""
+zt_private_key: ""
+zt_networks: []
