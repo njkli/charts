@@ -31,7 +31,7 @@ spec:
           path: /dev/fuse
       containers:
         - name: "{{ .Chart.Name }}-yadisk"
-          image: voobscout/base-deb:yadisk
+          image: voobscout/yadisk
           env:
             - name: RUN_USER
               value: app

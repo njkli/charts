@@ -19,8 +19,8 @@ service:
 persistence:
   # existingClaim:
   storageClass:
-  size: 50Gi
-  accessMode: ReadWriteMany
+  size: 10Gi
+  accessMode: ReadWriteOnce
 
 resources: {}
 
@@ -33,8 +33,13 @@ affinity: {}
 yadisk:
   uname:
   passwd:
-
+# https://raw.githubusercontent.com/docker-library/mariadb/master/10.1/Dockerfile
+# https://raw.githubusercontent.com/docker-library/mariadb/master/10.1/docker-entrypoint.sh
 mariadb:
+  # image:
+  #   registry: docker.io
+  #   repository: voobscout/mariadb
+  #   tag: 10.1.33
   enabled: true
   mariadbDatabase:
   mariadbUser:

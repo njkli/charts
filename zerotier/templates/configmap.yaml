@@ -16,11 +16,10 @@ data:
         local networks=$(zerotier-cli listnetworks | grep -o -E '([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$')
         local eth0_ipaddr=$(ip a show eth0 | grep 'inet ' | xargs | cut -d' ' -f2 | cut -d'/' -f1)
         local anywhere="0.0.0.0/0"
-        local eth0_name=$(ip a show eth0 | grep qdisc | cut -d' ' -f2)
 
         for net in ${networks[*]}
         do
-            eval iptables -t nat -A POSTROUTING -s $net -o ${eth0_name/:/} -j SNAT --to-source $eth0_ipaddr
+            eval iptables -t nat -A POSTROUTING -s $net -o eth0 -j SNAT --to-source $eth0_ipaddr
             eval iptables -A FORWARD -s $net -d $anywhere -j ACCEPT
             eval iptables -A FORWARD -s $anywhere -d $net -j ACCEPT
         done
