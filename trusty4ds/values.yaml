@@ -35,6 +35,7 @@ yadisk:
   passwd:
 # https://raw.githubusercontent.com/docker-library/mariadb/master/10.1/Dockerfile
 # https://raw.githubusercontent.com/docker-library/mariadb/master/10.1/docker-entrypoint.sh
+
 mariadb:
   # image:
   #   registry: docker.io
