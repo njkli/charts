@@ -1,0 +1,262 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "nix-hydra.fullname" . }}
+  labels:
+    app: {{ template "nix-hydra.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  10-create-hydra-user: |
+    #!/bin/bash
+    set -e
+    HYDRA_BASEDIR="/var/lib/hydra"
+    NIX_SH="/usr/local/etc/profile.d/nix.sh"
+
+    [[ -e $NIX_SH ]] && . $NIX_SH || exit 1
+
+    ln -s /usr/bin/stat /bin/stat
+    ln -s /usr/bin/id /bin/id
+
+    useradd -d $HYDRA_BASEDIR -m -u 1000 -G sudo -s /bin/bash hydra
+    cp -r /etc/skel/. $HYDRA_BASEDIR
+    chown hydra:hydra $HYDRA_BASEDIR
+    chown hydra:hydra $HYDRA_BASEDIR/.*
+
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/10-hydra
+
+    mkdir -p $HYDRA_BASEDIR/.config/nixpkgs
+    echo '{ allowUnfree = true; }' > $HYDRA_BASEDIR/.config/nixpkgs/config.nix
+    chown --recursive hydra:hydra $HYDRA_BASEDIR/.config
+
+    nix-setup-user hydra
+  11-generate-hydra-ssh-keys: |
+    #!/bin/bash
+    set -e
+    HYDRA_BASEDIR="/var/lib/hydra"
+
+    mkdir -p $HYDRA_BASEDIR/.ssh
+    ssh-keygen -q -f $HYDRA_BASEDIR/.ssh/id_rsa -N '' -C 'hydra@{{ .Chart.Name }}'
+    echo 'StrictHostKeyChecking no' > $HYDRA_BASEDIR/.ssh/config
+    chown --recursive hydra:hydra $HYDRA_BASEDIR/.ssh
+
+    cp $HYDRA_BASEDIR/.ssh/id_rsa.pub /var/www/html
+    chmod 0655 /var/www/html/id_rsa.pub
+
+    rm -rf /var/www/html/index.lighttpd.html
+  30-builder-enable-services: |
+    #!/bin/bash
+    set -e
+
+    /bin/systemctl start builder-authorized-keys-setup.service --no-block
+
+  31-server-enable-services: |
+    #!/bin/bash
+    set -e
+
+    systemctl start hydra-init.service --no-block
+
+  90-dont-run-sshd: |
+    #!/bin/bash
+    set -e
+
+    touch /etc/ssh/sshd_not_to_be_run
+
+  builder-authorized-keys-setup.service: |
+    [Unit]
+    Description=Download public keys from hydra-server
+    After=sshd.service
+
+    [Service]
+    ExecStart=/usr/sbin/builder-authorized-keys-setup
+    Type=oneshot
+    RemainAfterExit=true
+
+    [Install]
+    WantedBy=multi-user.target
+
+  builder-authorized-keys-setup: |
+    #!/bin/bash
+    set -e
+
+    HYDRA_BASEDIR="/var/lib/hydra"
+    dot_ssh="$HYDRA_BASEDIR/.ssh"
+
+    [[ -d $dot_ssh ]] && rm -rf $dot_ssh || true
+    mkdir -p $dot_ssh
+
+    while ! $(timeout 3 bash -c 'cat < /dev/null > /dev/tcp/{{ template "nix-hydra.fullname" . }}/2222');do echo 'Waiting for hydra-server...' && sleep 5;done
+
+    curl -fsSkL --retry-max-time 480 --retry 20 -s http://{{ template "nix-hydra.fullname" . }}:2222/id_rsa.pub > $dot_ssh/authorized_keys
+    chmod 0600 $dot_ssh/authorized_keys
+    chown --recursive hydra:hydra $dot_ssh
+
+  builder-lighttpd-override.conf: |
+    [Unit]
+    ConditionPathExists=!/etc/lighttpd/lighttpd_not_to_be_run
+
+  lighttpd_not_to_be_run: |
+    # Non-empty string here
+
+  builder-sshd-override.conf: |
+    [Service]
+    ExecStartPre=
+    ExecStartPre=/usr/sbin/builder-sshd-prestart
+
+  builder-sshd-prestart: |
+    #!/bin/bash
+    set -e
+
+    k_pre="/etc/ssh/ssh_host_"
+    k_suf="_key"
+    k_types="rsa dsa ecdsa ed25519"
+    kg="/usr/bin/ssh-keygen"
+
+    for i in $k_types;do echo y | "${kg}" -q -f "${k_pre}${i}${k_suf}" -N '' -t "${i}";done
+    /usr/sbin/sshd -t
+
+  hydra-init-env: |
+    NIX_REMOTE="daemon"
+    SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
+    HYDRA_CONFIG = "/var/lib/hydra/hydra.conf";
+
+  hydra-init.service: |
+    [Unit]
+    Description=Hydra-init
+    After=configurator_dumpenv.service nix.service
+
+    [Service]
+    # https://docs.docker.com/engine/security/seccomp/#significant-syscalls-blocked-by-the-default-profile
+    # add_key is blocked, can run with --security-opt seccomp=unconfined as docker options.
+    # User=hydra
+    PermissionsStartOnly=true
+    EnvironmentFile=-/etc/default/hydra
+    ExecStartPre=/usr/sbin/hydra-init-remotes
+    ExecStartPre=/usr/sbin/hydra-init-db
+    ExecStart=hydra-init
+    Type=oneshot
+    RemainAfterExit=true
+
+    [Install]
+    WantedBy=multi-user.target
+
+  hydra-init-remotes: |
+    #!/bin/bash
+    set -e
+
+    while ! $(timeout 3 bash -c "cat < /dev/null > /dev/tcp/$KUBERNETES_SERVICE_HOST/$KUBERNETES_PORT_443_TCP_PORT");do echo 'Waiting for KUBERNETES_SERVICE_HOST...' && sleep 5;done
+
+    SA_PATH="/var/run/secrets/kubernetes.io/serviceaccount"
+    KUBE_TOKEN=$(<$SA_PATH/token)
+    NAMESPACE=$(<$SA_PATH/namespace)
+    CACERT_FILE="$SA_PATH/ca.crt"
+    AUTH_HEADER="Authorization: Bearer $KUBE_TOKEN"
+    API_ENDPOINT="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/$NAMESPACE/pods"
+    REMOTE_BUILDERS=$(curl -s --cacert $CACERT_FILE -H "Authorization: Bearer $KUBE_TOKEN" $API_ENDPOINT | jq -r '.items[] | select(.metadata.name | contains("nix-hydra-builder")).status.podIP' -)
+
+    for i in $REMOTE_BUILDERS
+    do
+      var="hydra@$i x86_64-linux $HYDRA_DATA/.ssh/id_rsa 1"
+      export NIX_REMOTE_SYSTEMS="${var}:${NIX_REMOTE_SYSTEMS}"
+      echo "$var" >> /etc/nix/machines
+    done
+    systemctl import-environment NIX_REMOTE_SYSTEMS
+
+  hydra-init-db: |
+    #!/bin/bash
+    set -e
+
+    NIX_SH="/usr/local/etc/profile.d/nix.sh"
+    [[ -e $NIX_SH ]] && . $NIX_SH || exit 1
+
+    hydra-init
+    hydra-create-user '{{ .Values.hydra_admin.uname }}' \
+    --password '{{ .Values.hydra_admin.passwd }}' \
+    --full-name '{{ .Values.hydra_admin.full_name }}' \
+    --email-address '{{ .Values.hydra_admin.email }}' \
+    --role admin
+    echo 'Finished initializing fresh hydra'
+
+  hydra.conf: |
+    using_frontend_proxy = 1
+    max_servers = 25
+    use-substitutes = 1
+
+  hydra-nix.conf: |
+    gc-keep-outputs = true
+    gc-keep-derivations = true
+    gc-check-reachability = false
+    builders = @/etc/nix/machines
+
+  hydra_env: |
+    basedir="/var/lib/hydra"
+
+  hydra_run_script: |
+    #!/bin/bash
+    set -e
+
+    . /home/hydra/.nix-profile/etc/profile.d/nix.sh
+
+    mkdir -p $HOME/.config/nixpkgs
+    echo '{ allowUnfree = true; }' > $HOME/.config/nixpkgs/config.nix
+
+    export NIX_REMOTE=daemon
+    sudo /home/hydra/.nix-profile/bin/nix-daemon &
+
+    export HYDRA_CONFIG=$HOME/hydra.conf
+
+    hydra-queue-runner &
+    hydra-evaluator &
+    hydra-server &
+
+    echo 'Finished starting up....'
+    echo '********************************************************************************'
+    cat /etc/nix/machines
+    echo '********************************************************************************'
+    while true;do sleep 10;done
+
+  hydra_liveness_probe: |
+    #!/bin/bash
+    set -e
+
+    ps aux | grep 'hydra-evaluator' || exit 1
+    ps aux | grep 'starman worker' || exit 1
+
+  builder_setup_script: |
+    #!/bin/bash
+    set -e
+
+    mkdir -p /var/run/sshd
+    echo 'ForceCommand /usr/bin/nix4ssh' >> /etc/ssh/sshd_config
+    /usr/sbin/sshd -D &> /dev/stdout &
+    # We should totally fail when that dies:
+    exec /home/hydra/.nix-profile/bin/nix-daemon
+
+  builder_sshd_forcecommand: |
+    #!/bin/bash
+    set -e
+
+    nixsh="/home/hydra/.nix-profile/etc/profile.d/nix.sh"
+    [[ -e $nixsh ]] && . $nixsh
+    exec $SSH_ORIGINAL_COMMAND
+
+  seccomp-test.service: |
+    [Unit]
+    Description=seccomp-test
+    After=configurator_dumpenv.service nix.service
+
+    [Service]
+    # https://docs.docker.com/engine/security/seccomp/#significant-syscalls-blocked-by-the-default-profile
+    # add_key is blocked, can run with --security-opt seccomp=unconfined as docker options.
+    User=hydra
+    PermissionsStartOnly=true
+    # EnvironmentFile=-/etc/default/hydra
+    # ExecStartPre=/usr/sbin/hydra-init-remotes
+    # ExecStartPre=/usr/sbin/hydra-init-db
+    ExecStart=/usr/bin/logger -t SHIT running service as user
+    Type=oneshot
+    RemainAfterExit=true
+
+    [Install]
+    WantedBy=multi-user.target

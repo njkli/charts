@@ -1,0 +1,57 @@
+  hydra_conf: |
+    use-substitutes = 1
+
+  nix_conf: |
+    build-users-group = nixbld
+    max-jobs = 1
+    cores = 4
+    sandbox = false
+    auto-optimise-store = false
+
+    require-sigs = false
+
+    trusted-users = root hydra hydra-queue-runner
+    allowed-users = *
+
+    binary-caches-parallel-connections = 3
+    connect-timeout = 5
+
+    builders = @/etc/nix/machines
+    builders-use-substitutes = false
+
+    # secret-key-files =
+    # store = daemon
+    # substitute = true
+    # substituters = https://cache.nixos.org/
+
+  hydra_q: |
+    mkdir -p ${baseDir}
+    chown hydra.hydra ${baseDir}
+    chmod 0750 ${baseDir}
+
+    ln -sf ${hydraConf} ${baseDir}/hydra.conf
+
+    mkdir -m 0700 -p ${baseDir}/www
+    chown hydra-www.hydra ${baseDir}/www
+
+    mkdir -m 0700 -p ${baseDir}/queue-runner
+    mkdir -m 0750 -p ${baseDir}/build-logs
+    chown hydra-queue-runner.hydra ${baseDir}/queue-runner ${baseDir}/build-logs
+
+  hydra_setup_script: |
+    #!/bin/bash
+    set -e
+
+    #server env
+    HYDRA_TRACKER = cfg.tracker;
+    XDG_CACHE_HOME = "${baseDir}/www/.cache";
+    COLUMNS = "80";
+    PGPASSFILE = "${baseDir}/pgpass-www";
+
+    # https://nixos.wiki/wiki/Install_Nix_in_multi-user_mode_on_non-NixOS
+    export NIX_REMOTE=daemon
+    # /etc/nix/nix.conf:
+
+    # hydra.conf
+    base_uri = ${cfg.hydraURL}
+    gc_roots_dir = ${cfg.gcRootsDir}

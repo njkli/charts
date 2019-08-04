@@ -1,0 +1,187 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "nix-hydra.fullname" . }}-server
+  labels:
+    app: {{ template "nix-hydra.name" . }}
+    component: {{ template "nix-hydra.fullname" . }}-server
+    chart: {{ template "nix-hydra.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "nix-hydra.name" . }}
+      component: {{ template "nix-hydra.fullname" . }}-server
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "nix-hydra.name" . }}
+        component: {{ template "nix-hydra.fullname" . }}-server
+        release: {{ .Release.Name }}
+    annotations:
+      seccomp.security.alpha.kubernetes.io/pod: unconfined
+    spec:
+      serviceAccountName: {{ template "nix-hydra.fullname" . }}-sa
+      # securityContext:
+      #   fsGroup: 1000
+      volumes:
+      - name: cgroup
+        hostPath:
+          path: /sys/fs/cgroup
+      - name: tmpfs-run
+        emptyDir:
+          medium: Memory
+      - name: tmpfs-run-lock
+        emptyDir:
+          medium: Memory
+      - name: config
+        configMap:
+          name: {{ template "nix-hydra.fullname" . }}
+          defaultMode: 0755
+      - name: nix-store
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim | default (include "nix-hydra.fullname" .) }}
+      # initContainers:
+      #   - name: "{{ .Chart.Name }}-init"
+      #     image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+      #     imagePullPolicy: {{ .Values.image.pullPolicy }}
+      #     stdin: true
+      #     tty: true
+      #     securityContext:
+      #       runAsUser: 1000
+      #       allowPrivilegeEscalation: true
+      #     workingDir: /home/hydra
+      #     command:
+      #       - /usr/bin/hydra_init_script
+      #     volumeMounts:
+      #       - mountPath: /usr/bin/hydra_init_script
+      #         name: config
+      #         subPath: hydra_init_script
+      #       - mountPath: /var/lib/hydra
+      #         name: nix-store
+      #     env:
+      #       - name: HYDRA_DBI
+      #         valueFrom:
+      #           secretKeyRef:
+      #             name: {{ template "nix-hydra.fullname" . }}
+      #             key: hydra_dbi
+      #       - name: HYDRA_DATA
+      #         value: "/var/lib/hydra"
+      #       - name: USER
+      #         value: hydra
+      containers:
+        - name: {{ .Chart.Name }}
+          image: njkli/nix:hydra
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          stdin: true
+          tty: true
+          securityContext:
+            # runAsUser: 1000
+            # fsGroup: 1000
+            allowPrivilegeEscalation: true
+          volumeMounts:
+          - mountPath: /sys/fs/cgroup
+            name: cgroup
+          - mountPath: /run
+            name: tmpfs-run
+          - mountPath: /run/lock
+            name: tmpfs-run-lock
+          - mountPath: /etc/container-boot.d/10-create-hydra-user
+            name: config
+            subPath: 10-create-hydra-user
+          - mountPath: /etc/container-boot.d/11-generate-hydra-ssh-keys
+            name: config
+            subPath: 11-generate-hydra-ssh-keys
+          # - mountPath: /etc/container-boot.d/12-initialize-nix-remotes
+          #   name: config
+          #   subPath: 12-initialize-nix-remotes
+          - mountPath: /etc/container-boot.d/90-dont-run-sshd
+            name: config
+            subPath: 90-dont-run-sshd
+          - mountPath: /var/lib/hydra/hydra.conf
+            name: config
+            subPath: hydra.conf
+          - mountPath: /etc/nix/nix.conf
+            name: config
+            subPath: hydra-nix.conf
+          - mountPath: /etc/systemd/system/hydra-init.service
+            name: config
+            subPath: hydra-init.service
+          - mountPath: /usr/sbin/hydra-init-remotes
+            name: config
+            subPath: hydra-init-remotes
+          - mountPath: /usr/sbin/hydra-init-db
+            name: config
+            subPath: hydra-init-db
+          - mountPath: /etc/default/hydra
+            name: config
+            subPath: hydra-init-env
+          - mountPath: /usr/bin/hydra_liveness_probe
+            name: config
+            subPath: hydra_liveness_probe
+          - mountPath: /var/lib/hydra
+            name: nix-store
+          #
+          - mountPath: /etc/systemd/system/seccomp-test.service
+            name: config
+            subPath: seccomp-test.service
+          #
+          # lifecycle:
+          #   postStart:
+          #     exec:
+          #       command: ["cmd", "args", "args"]
+          env:
+            - name: HYDRA_DBI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "nix-hydra.fullname" . }}
+                  key: hydra_dbi
+            # FIXME: error: environment variable 'LOGNAME' is not set
+            - name: HYDRA_DATA
+              value: "/var/lib/hydra"
+            - name: USER
+              # FIXME: {{ .Values.postgresql.postgresUser }} perhaps?
+              value: hydra
+          ports:
+            - name: hydra-ssh-key
+              containerPort: 80
+              protocol: TCP
+            - name: hydra-ui
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+              # - /usr/bin/hydra_liveness_probe
+              - /bin/true
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - /bin/true
+            # httpGet:
+            #   path: /
+            #   port: 3000
+              # httpHeaders:
+              #   - name: X-Custom-Header
+              #     value: Awesome
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

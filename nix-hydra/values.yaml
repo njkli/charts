@@ -1,0 +1,104 @@
+replicaCount: 2
+
+image:
+  repository: njkli/hydra
+  tag: latest
+  pullPolicy: Always
+  # pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+# Size of /nix/store?
+persistence:
+  storageClass:
+  size: 35Gi
+  accessMode: ReadWriteOnce
+
+hydra_admin:
+  uname:
+  passwd:
+  full_name:
+  email:
+
+remote_machines:
+  ssh_key:
+    private:
+    public:
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+postgresql:
+  # image: "postgres"
+  # imageTag: "9.6.2"
+  # imagePullPolicy: IfNotPresent
+  ## Create a database
+  ## Default: the postgres user
+  postgresDatabase:
+  ## Specify initdb arguments, e.g. --data-checksums
+  ## ref: https://github.com/docker-library/docs/blob/master/postgres/content.md#postgres_initdb_args
+  ## ref: https://www.postgresql.org/docs/current/static/app-initdb.html
+  # postgresInitdbArgs:
+  # Create a database user
+  postgresUser:
+  postgresPassword:
+  ## Inject postgresPassword via a volume mount instead of environment variable
+  usePasswordFile: false
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  # schedulerName:
+
+  ## Specify runtime config parameters as a dict, using camelCase, e.g.
+  ## {"sharedBuffers": "500MB"}
+  ## ref: https://www.postgresql.org/docs/current/static/runtime-config.html
+  # postgresConfig:
+  persistence:
+    enabled: true
+    ## A manually managed Persistent Volume and Claim
+    ## Requires persistence.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    # existingClaim:
+
+    ## database data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    accessMode: ReadWriteOnce
+    size: 8Gi
+    # subPath: "postgresql-db"
+    # mountPath: /var/lib/postgresql/data/pgdata

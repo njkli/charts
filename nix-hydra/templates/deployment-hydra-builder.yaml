@@ -1,0 +1,138 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "nix-hydra.fullname" . }}-builder
+  labels:
+    app: {{ template "nix-hydra.name" . }}
+    component: {{ template "nix-hydra.fullname" . }}-builder
+    chart: {{ template "nix-hydra.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values: ["{{ template "nix-hydra.name" . }}"]
+          - key: component
+            operator: In
+            values: ["{{ template "nix-hydra.fullname" . }}-builder"]
+        topologyKey: kubernetes.io/hostname
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "nix-hydra.name" . }}
+      component: {{ template "nix-hydra.fullname" . }}-builder
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "nix-hydra.name" . }}
+        component: {{ template "nix-hydra.fullname" . }}-builder
+        release: {{ .Release.Name }}
+    annotations:
+      seccomp.security.alpha.kubernetes.io/pod: docker/default
+    spec:
+      # securityContext:
+      #   fsGroup: 1000
+      volumes:
+      - name: cgroup
+        hostPath:
+          path: /sys/fs/cgroup
+      - name: tmpfs-run
+        emptyDir:
+          medium: Memory
+      - name: tmpfs-run-lock
+        emptyDir:
+          medium: Memory
+      - name: config
+        configMap:
+          name: {{ template "nix-hydra.fullname" . }}
+          defaultMode: 0755
+      containers:
+        - name: {{ .Chart.Name }}
+          image: njkli/nix:builder
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          stdin: true
+          tty: true
+          # securityContext:
+          #   runAsUser: 1000
+          #   allowPrivilegeEscalation: true
+          volumeMounts:
+          - mountPath: /sys/fs/cgroup
+            name: cgroup
+          - mountPath: /run
+            name: tmpfs-run
+          - mountPath: /run/lock
+            name: tmpfs-run-lock
+          - mountPath: /etc/container-boot.d/10-create-hydra-user
+            name: config
+            subPath: 10-create-hydra-user
+          # - mountPath: /etc/container-boot.d/20-generate-host-ssh-keys
+          #   name: config
+          #   subPath: 20-generate-host-ssh-keys
+          - mountPath: /etc/container-boot.d/30-builder-enable-services
+            name: config
+            subPath: 30-builder-enable-services
+          - mountPath: /etc/systemd/system/builder-authorized-keys-setup.service
+            name: config
+            subPath: builder-authorized-keys-setup.service
+          - mountPath: /usr/sbin/builder-authorized-keys-setup
+            name: config
+            subPath: builder-authorized-keys-setup
+          - mountPath: /etc/systemd/system/lighttpd.service.d/override.conf
+            name: config
+            subPath: builder-lighttpd-override.conf
+          - mountPath: /etc/lighttpd/lighttpd_not_to_be_run
+            name: config
+            subPath: lighttpd_not_to_be_run
+          - mountPath: /etc/systemd/system/sshd.service.d/override.conf
+            name: config
+            subPath: builder-sshd-override.conf
+          - mountPath: /usr/sbin/builder-sshd-prestart
+            name: config
+            subPath: builder-sshd-prestart
+          # workingDir: /home/hydra
+          # lifecycle:
+          #   postStart:
+          #     exec:
+          #       command: ["cmd", "args", "args"]
+          # command: ["/usr/bin/builder_setup_script", "&&", "exec", "sudo", "/usr/bin/dumb-init", "/start.sh"]
+          # args: ["/bin/bash", "-l"]
+          # command: ["/bin/bash", "-l"]
+          env:
+            - name: USER
+              value: hydra
+          ports:
+            - name: hydra-ssh
+              containerPort: 22
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+              - /bin/true
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - /bin/true
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
