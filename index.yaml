@@ -1,3 +1,13 @@
 apiVersion: v1
-entries: {}
-generated: 2018-08-16T06:10:38.71503668+02:00
+entries:
+  trusty4ds:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-02-09T17:13:32.655059447+01:00"
+    description: trusty4ds - ubuntu:trusty for Distributed System ruby container
+    digest: 1ea3692f0a31a6e7faea7690aba7be8d03bf694284895fc4c200fa3d11f296fa
+    name: trusty4ds
+    urls:
+    - https://charts.njk.li/trusty4ds-0.1.4.tgz
+    version: 0.1.4
+generated: "2020-02-09T17:13:32.651624679+01:00"
