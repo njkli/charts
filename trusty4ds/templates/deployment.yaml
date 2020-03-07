@@ -82,6 +82,13 @@ spec:
           - mountPath: /dev/fuse
             name: fusedev
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "/usr/sbin/zerotier-one"
+            - "-d"
+            - "/var/lib/zerotier-one"
+            - "&&"
+            - "/usr/sbin/sshd"
+            - "-D"
           securityContext:
             privileged: true
             # Unfortunately fuse refuses to mount with those caps:
