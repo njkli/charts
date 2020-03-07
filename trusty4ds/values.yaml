@@ -30,6 +30,10 @@ tolerations: []
 
 affinity: {}
 
+zerotierone:
+  networks: []
+  private_key:
+
 yadisk:
   uname:
   passwd:

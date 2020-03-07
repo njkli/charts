@@ -23,6 +23,10 @@ spec:
       - name: config
         configMap:
           name: {{ template "trusty4ds.fullname" . }}
+      - name: scripts
+        configMap:
+          name: 'scripts-{{ template "trusty4ds.fullname" . }}'
+          defaultMode: 0755
       - name: data
         persistentVolumeClaim:
           claimName: {{ .Values.persistence.existingClaim | default (include "trusty4ds.fullname" .) }}
@@ -77,18 +81,16 @@ spec:
           - mountPath: /opt/app/.ssh/authorized_keys
             name: config
             subPath: authorized_keys
+          - mountPath: /usr/local/bin/start
+            name: scripts
+            subPath: container_start
           - mountPath: /opt/app/run
             name: data
           - mountPath: /dev/fuse
             name: fusedev
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
-            - "/usr/sbin/zerotier-one"
-            - "-d"
-            - "/var/lib/zerotier-one"
-            - "&&"
-            - "/usr/sbin/sshd"
-            - "-D"
+            - /usr/local/bin/start
           securityContext:
             privileged: true
             # Unfortunately fuse refuses to mount with those caps:

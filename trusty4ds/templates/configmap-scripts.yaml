@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: 'scripts-{{ template "trusty4ds.fullname" . }}'
+  labels:
+    app: {{ template "trusty4ds.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  container_start: |
+    #!/bin/bash
+    basedir=/var/lib/zerotier-one
+    ztpk=$basedir/identity.secret
+
+    mkdir -p $basedir/networks.d
+    {{- range .Values.zerotierone.networks }}
+    touch $basedir/networks.d/{{ . }}.conf
+    {{- end }}
+
+    echo '{{ .Values.zerotierone.private_key }}' > $ztpk
+    chmod 0700 $ztpk
+
+    /etc/init.d/zerotier-one start
+    /usr/sbin/sshd -D
