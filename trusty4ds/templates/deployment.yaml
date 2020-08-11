@@ -34,44 +34,6 @@ spec:
         hostPath:
           path: /dev/fuse
       containers:
-        - name: "{{ .Chart.Name }}-yadisk"
-          image: voobscout/yadisk
-          env:
-            - name: RUN_USER
-              value: app
-            - name: RUN_UID
-              value: "1002"
-            - name: YANDEX_UNAME
-              value: {{ .Values.yadisk.uname | quote }}
-            - name: YANDEX_PASSWD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "trusty4ds.fullname" . }}
-                  key: yandex_passwd
-          stdin: true
-          tty: true
-          volumeMounts:
-          - mountPath: /home/app/Yandex.Disk
-            name: data
-          livenessProbe:
-            exec:
-              command:
-              - bash
-              - -c
-              - "ps aux | grep -i '[y]andex'"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            exec:
-              command:
-              - runuser
-              - app
-              - -c
-              - 'yandex-disk status'
-            initialDelaySeconds: 60
-            periodSeconds: 10
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          # end of yadisk container
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           volumeMounts:

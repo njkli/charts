@@ -1,23 +1,17 @@
-# Default values for trusty4ds.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 replicaCount: 1
 
 image:
   repository: voobscout/trusty4ds
   tag: latest
   pullPolicy: IfNotPresent
-  # Always
 
 service:
   type: ClusterIP
   port: 22
   authorized_keys: |
-    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUKXJgShJMrBFi6VvKCsCJO9c1wLA3ugL3LAJGsRO9KXdZGmLC74/s0KVw4uaWHoTz91qLPdnplSdLU3KDK7loIdKRBR8E4KJ1MiZKGIj7F9NsniiNetQkKvUazrhRx8nFOAYSPD4znkhrh53nXnsI2WDACt0CGNYX33hV3J/kblWYit/wcIEtJg1ivFmBrljtAMZpS2mBpAK0kySCY2BP+Ph8x+6EuCkH1w2J4Moa0fYkibF3K7O4cmcWAtD53eyr8YN4JKvAwTe+uXVsdFDUNkZvCdOLTDDRd7t7C+qL3nbJMv5jVoED0bBBfn7NfEfyqLOzXHmE4bfuMo7KBlH7
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC1O9r2vhqQdUZNHpYI8HfdHk6unygQT+X4pAqqHmuSd2tSRbmqyB9bOAKACFdPvYmg+ujdVk8qAMe/XNgh/p0CmbPGnNXSrU+jvvRwon4o7LEZ3SRGDPFqrevU8kehRtXwR0bGt4zbAqRyroFH2x5h7BoKDS6yo7G0ufJ177TIGQ== ExampleKey
 
 persistence:
-  # existingClaim:
   storageClass:
   size: 10Gi
   accessMode: ReadWriteOnce
@@ -34,17 +28,7 @@ zerotierone:
   networks: []
   private_key:
 
-yadisk:
-  uname:
-  passwd:
-# https://raw.githubusercontent.com/docker-library/mariadb/master/10.1/Dockerfile
-# https://raw.githubusercontent.com/docker-library/mariadb/master/10.1/docker-entrypoint.sh
-
 mariadb:
-  # image:
-  #   registry: docker.io
-  #   repository: voobscout/mariadb
-  #   tag: 10.1.33
   enabled: true
   mariadbDatabase:
   mariadbUser:
@@ -52,13 +36,5 @@ mariadb:
   mariadbRootPassword:
   persistence:
     enabled: true
-    ## mariadb data Persistent Volume Storage Class
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    # storageClass: "-"
     accessMode: ReadWriteOnce
     size: 5Gi
