@@ -1,4 +1,5 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
+# extensions/v1beta1
 kind: Deployment
 metadata:
   name: {{ template "trusty4ds.fullname" . }}
@@ -56,7 +57,7 @@ spec:
           securityContext:
             privileged: true
             # Unfortunately fuse refuses to mount with those caps:
-            # TODO: maybe mknod inside container and try like that?
+            # NOTE: maybe mknod inside container and try like that?
             # capabilities:
             #   add:
             #     - SYS_ADMIN

@@ -3,7 +3,21 @@ entries:
   trusty4ds:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-08-11T09:47:27.012433332+02:00"
+    created: "2020-09-07T17:54:31.629321586+02:00"
+    dependencies:
+    - condition: mariadb.enabled
+      name: mariadb
+      repository: https://charts.bitnami.com/stable
+      version: 2.1.7
+    description: trusty4ds - ubuntu:trusty for Distributed System ruby container
+    digest: a74907710867ad5757b5e378659d45ebaa6b89d2996a6e516ba3a19e23051845
+    name: trusty4ds
+    urls:
+    - https://charts.njk.li/trusty4ds-0.1.8.tgz
+    version: 0.1.8
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-09-07T17:54:31.624037711+02:00"
     dependencies:
     - condition: mariadb.enabled
       name: mariadb
@@ -15,4 +29,4 @@ entries:
     urls:
     - https://charts.njk.li/trusty4ds-0.1.7.tgz
     version: 0.1.7
-generated: "2020-08-11T09:47:27.005253644+02:00"
+generated: "2020-09-07T17:54:31.616757685+02:00"
