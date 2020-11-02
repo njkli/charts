@@ -9,10 +9,10 @@ metadata:
     heritage: "{{ .Release.Service }}"
 data:
   database.yaml: |
-    :mysql_database: {{ .Values.mariadb.mariadbDatabase }}
-    :mysql_uname: {{ .Values.mariadb.mariadbUser }}
-    :mysql_passwd: {{ .Values.mariadb.mariadbPassword }}
-    :mysql_root_passwd: {{ .Values.mariadb.mariadbRootPassword }}
+    :mysql_database: {{ .Values.mariadb.auth.database }}
+    :mysql_uname: {{ .Values.mariadb.auth.username }}
+    :mysql_passwd: {{ .Values.mariadb.auth.password }}
+    :mysql_root_passwd: {{ .Values.mariadb.auth.rootPassword }}
     :mysql_host: {{ template "trusty4ds.mariadb.fullname" . }}
     :mysql_port: '3306'
   authorized_keys: {{ .Values.service.authorized_keys }}
