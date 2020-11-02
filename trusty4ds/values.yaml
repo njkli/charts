@@ -11,10 +11,10 @@ service:
   authorized_keys: |
     ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC1O9r2vhqQdUZNHpYI8HfdHk6unygQT+X4pAqqHmuSd2tSRbmqyB9bOAKACFdPvYmg+ujdVk8qAMe/XNgh/p0CmbPGnNXSrU+jvvRwon4o7LEZ3SRGDPFqrevU8kehRtXwR0bGt4zbAqRyroFH2x5h7BoKDS6yo7G0ufJ177TIGQ== ExampleKey
 
-persistence:
-  storageClass:
-  size: 10Gi
-  accessMode: ReadWriteOnce
+# persistence:
+#   storageClass:
+#   size: 10Gi
+#   accessMode: ReadWriteOnce
 
 resources: {}
 
@@ -30,11 +30,10 @@ zerotierone:
 
 mariadb:
   enabled: true
-  mariadbDatabase:
-  mariadbUser:
-  mariadbPassword:
-  mariadbRootPassword:
+  auth:
+    rootPassword:
+    database:
+    username:
+    password:
   persistence:
-    enabled: true
-    accessMode: ReadWriteOnce
-    size: 5Gi
+    enabled: false
