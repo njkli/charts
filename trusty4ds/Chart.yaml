@@ -2,4 +2,9 @@ apiVersion: v1
 appVersion: "1.0"
 description: trusty4ds - ubuntu:trusty for Distributed System ruby container
 name: trusty4ds
-version: 0.1.10
+version: 0.1.11
+dependencies:
+- name: mariadb
+  version: 8.0.4
+  repository: https://charts.bitnami.com/bitnami
+  condition: mariadb.enabled
