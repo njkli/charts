@@ -30,6 +30,7 @@ mariadb:
     database:
     username:
     password:
-
-  # persistence:
-  #   enabled: false
+  persistence:
+    enabled: false
+  volumePermissions:
+    enabled: true

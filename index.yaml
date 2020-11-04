@@ -3,7 +3,16 @@ entries:
   trusty4ds:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.491641073+01:00"
+    created: "2020-11-04T15:32:30.171617894+01:00"
+    description: trusty4ds - ubuntu:trusty for Distributed System ruby container
+    digest: 71f504f0e16c33b560da73753278adb180632e09a8928ce98088e9a25f688fc3
+    name: trusty4ds
+    urls:
+    - https://charts.njk.li/trusty4ds-0.1.18.tgz
+    version: 0.1.18
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-11-04T15:32:30.14737546+01:00"
     description: trusty4ds - ubuntu:trusty for Distributed System ruby container
     digest: 81de6e798602f8abf98cf493f3fbe99aaf2951078132b220555ada591cbec654
     name: trusty4ds
@@ -12,7 +21,7 @@ entries:
     version: 0.1.15
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.476135454+01:00"
+    created: "2020-11-04T15:32:30.131080272+01:00"
     description: trusty4ds - ubuntu:trusty for Distributed System ruby container
     digest: c406b0677f162124d10ac9153d49d51aad8135b2ab9429c4d7325fbd5f520954
     name: trusty4ds
@@ -21,7 +30,7 @@ entries:
     version: 0.1.12
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.460688997+01:00"
+    created: "2020-11-04T15:32:30.112723163+01:00"
     description: trusty4ds - ubuntu:trusty for Distributed System ruby container
     digest: 539f218cc772bfe5a5904fdca223cb8b6e84eb82be92fcbb53d46a50d7060fe4
     name: trusty4ds
@@ -30,7 +39,7 @@ entries:
     version: 0.1.11
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.438635153+01:00"
+    created: "2020-11-04T15:32:30.090731+01:00"
     dependencies:
     - condition: mariadb.enabled
       name: mariadb
@@ -44,7 +53,7 @@ entries:
     version: 0.1.10
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.545471679+01:00"
+    created: "2020-11-04T15:32:30.198107097+01:00"
     dependencies:
     - condition: mariadb.enabled
       name: mariadb
@@ -58,7 +67,7 @@ entries:
     version: 0.1.9
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.526530716+01:00"
+    created: "2020-11-04T15:32:30.185747974+01:00"
     dependencies:
     - condition: mariadb.enabled
       name: mariadb
@@ -72,7 +81,7 @@ entries:
     version: 0.1.8
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-11-02T18:54:24.518913644+01:00"
+    created: "2020-11-04T15:32:30.179724238+01:00"
     dependencies:
     - condition: mariadb.enabled
       name: mariadb
@@ -84,4 +93,4 @@ entries:
     urls:
     - https://charts.njk.li/trusty4ds-0.1.7.tgz
     version: 0.1.7
-generated: "2020-11-02T18:54:24.425230604+01:00"
+generated: "2020-11-04T15:32:30.073065265+01:00"
